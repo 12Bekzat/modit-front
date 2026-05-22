@@ -1,0 +1,20 @@
+﻿{
+  "short_name": "modit",
+  "name": "modit интернет-магазин техники",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
+
+
+
+
+
