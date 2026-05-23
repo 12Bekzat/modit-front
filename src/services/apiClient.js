@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '').replace(/\/api$/, '');
 
 export async function apiRequest(path, { method = 'GET', body, token } = {}) {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
