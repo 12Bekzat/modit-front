@@ -2,19 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { createOrder } from '../services/orderApi';
 import { createPreorder, fetchProductById, fetchProducts } from '../services/productApi';
 import { buildCatalogPath, buildProductPath } from '../utils/catalogRouting';
 import { getPrimaryProductImage, getProductImageUrls } from '../utils/productImages';
 import { toProductSnapshot } from '../utils/productSnapshot';
 
 const deliveryLabels = {
-  today: 'Самовывоз сегодня',
+  today: 'Доставка сегодня',
   tomorrow: 'Доставка завтра',
   '2-3 days': 'Доставка 2-3 дня',
   '3-5 days': 'Доставка 3-5 дней',
   preorder: 'Поставка под заказ',
-  сегодня: 'Самовывоз сегодня',
+  сегодня: 'Доставка сегодня',
   завтра: 'Доставка завтра',
   '2-3 дня': 'Доставка 2-3 дня',
   '3-5 дней': 'Доставка 3-5 дней',
@@ -23,36 +22,6 @@ const deliveryLabels = {
 
 function formatPrice(value) {
   return String(Math.round(Number(value || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-}
-
-function formatDate(value) {
-  if (!value) {
-    return '—';
-  }
-
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(value));
-  } catch {
-    return '—';
-  }
-}
-
-function splitFullName(fullName) {
-  if (!fullName) {
-    return { firstName: '', lastName: '' };
-  }
-
-  const [firstName = '', ...rest] = fullName.trim().split(/\s+/);
-  return {
-    firstName,
-    lastName: rest.join(' ')
-  };
 }
 
 function ProductDetailPage() {
@@ -65,17 +34,9 @@ function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [isQuickOrderOpen, setIsQuickOrderOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState('');
   const [isPreorderOpen, setIsPreorderOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeImage, setActiveImage] = useState('');
-  const [quickOrderForm, setQuickOrderForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    comment: ''
-  });
   const [preorderForm, setPreorderForm] = useState({
     contactName: '',
     contactEmail: '',
@@ -155,7 +116,7 @@ function ProductDetailPage() {
   const productImages = useMemo(() => getProductImageUrls(product), [product]);
   const isAvailable = Boolean(product?.inStock && Number(product?.availableQuantity) > 0);
   const maxQuantity = Math.max(Number(product?.availableQuantity || 1), 1);
-  const deliveryLabel = product ? (deliveryLabels[product.delivery] || 'Срок уточняется') : '';
+  const deliveryLabel = product ? (deliveryLabels[product.delivery] || 'Срок доставки уточняется') : '';
 
   const detailRows = useMemo(() => {
     if (!product) {
@@ -164,18 +125,12 @@ function ProductDetailPage() {
 
     return [
       { label: 'ID', value: product.id },
-      { label: 'Код товара', value: product.productCode || '—' },
-      { label: 'Внешний код', value: product.externalCode || '—' },
-      { label: 'Бренд', value: product.brand || '—' },
-      { label: 'Категория', value: product.category || '—' },
-      { label: 'Источник', value: product.source || '—' },
+      { label: 'Бренд', value: product.brand || '-' },
+      { label: 'Категория', value: product.category || '-' },
       { label: 'Валюта', value: currencyCode },
       { label: 'Рейтинг', value: Number(product.rating || 0).toFixed(1) },
       { label: 'Наличие', value: `${Number(product.availableQuantity || 0)} шт.` },
-      { label: 'Доставка', value: deliveryLabel },
-      { label: 'Создан', value: formatDate(product.createdAt) },
-      { label: 'Обновлен', value: formatDate(product.updatedAt) },
-      { label: 'Синхронизирован', value: formatDate(product.lastSyncedAt) }
+      { label: 'Доставка', value: deliveryLabel }
     ];
   }, [currencyCode, deliveryLabel, product]);
 
@@ -204,76 +159,20 @@ function ProductDetailPage() {
     }
   };
 
-  const openQuickOrder = () => {
-    if (!product) {
-      return;
-    }
-
-    const customer = splitFullName(user?.fullName);
-    setQuickOrderForm({
-      firstName: customer.firstName,
-      lastName: customer.lastName,
-      phone: user?.phone || '',
-      email: user?.email || '',
-      comment: `${product.name} (${product.productCode}) x${quantity}`
-    });
-    setError('');
-    setIsQuickOrderOpen(true);
-  };
-
   const openPreorder = () => {
     setPreorderForm({
       contactName: user?.fullName || '',
       contactEmail: user?.email || '',
       contactPhone: user?.phone || '',
-      comment: product ? `Интересует товар ${product.name} (${product.productCode})` : ''
+      comment: product ? `Интересует товар ${product.name}` : ''
     });
     setError('');
     setIsPreorderOpen(true);
   };
 
-  const closeModals = () => {
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsQuickOrderOpen(false);
-    setIsPreorderOpen(false);
-  };
-
-  const handleQuickOrderSubmit = async (event) => {
-    event.preventDefault();
-    if (!product) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-    setMessage('');
-
-    try {
-      await createOrder(
-        {
-          firstName: quickOrderForm.firstName,
-          lastName: quickOrderForm.lastName,
-          phone: quickOrderForm.phone,
-          email: quickOrderForm.email || undefined,
-          comment: quickOrderForm.comment || undefined,
-          items: [
-            {
-              product: toProductSnapshot(product),
-              quantity
-            }
-          ]
-        },
-        isAuthenticated ? token : undefined
-      );
-      setIsQuickOrderOpen(false);
-      setMessage('Заказ на товар создан. Менеджер свяжется с вами для подтверждения.');
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setIsSubmitting(false);
+  const closePreorder = () => {
+    if (!isSubmitting) {
+      setIsPreorderOpen(false);
     }
   };
 
@@ -299,7 +198,7 @@ function ProductDetailPage() {
         isAuthenticated ? token : undefined
       );
       setIsPreorderOpen(false);
-      setMessage('Заявка на предзаказ отправлена. Мы свяжемся с вами после проверки поставки.');
+      setMessage('Заявка отправлена. Мы свяжемся с вами после проверки поставки.');
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -313,7 +212,7 @@ function ProductDetailPage() {
         <div className="container">
           <div className="catalog-empty">
             <h3>Загружаем страницу товара</h3>
-            <p className="muted-text">Получаем подробные данные о товаре и актуальное наличие.</p>
+            <p className="muted-text">Получаем подробные данные и актуальное наличие.</p>
           </div>
         </div>
       </section>
@@ -327,7 +226,7 @@ function ProductDetailPage() {
           {error ? <p className="form-message is-error">{error}</p> : null}
           <div className="catalog-empty">
             <h3>Товар не найден</h3>
-            <p className="muted-text">Возможно, товар был удален или ссылка устарела.</p>
+            <p className="muted-text">Возможно, товар был удалён или ссылка устарела.</p>
             <Link to="/products" className="ghost-button">
               Вернуться в каталог
             </Link>
@@ -369,7 +268,7 @@ function ProductDetailPage() {
                     type="button"
                     className={`product-detail-thumb ${imageUrl === activeImage ? 'is-active' : ''}`}
                     onClick={() => setActiveImage(imageUrl)}
-                    aria-label={`РџРѕРєР°Р·Р°С‚СЊ С„РѕС‚Рѕ ${index + 1}`}
+                    aria-label={`Показать фото ${index + 1}`}
                   >
                     <img src={imageUrl} alt="" loading="lazy" />
                   </button>
@@ -380,7 +279,7 @@ function ProductDetailPage() {
 
           <div className="product-detail-main">
             <div className="product-detail-topline">
-              <span className="product-detail-tag">{product.tag || 'Каталог'}</span>
+              {product.tag ? <span className="product-detail-tag">{product.tag}</span> : null}
               <span className={`product-detail-stock ${isAvailable ? 'is-available' : 'is-missing'}`}>
                 {isAvailable ? `В наличии: ${product.availableQuantity} шт.` : 'Нет в наличии'}
               </span>
@@ -390,17 +289,11 @@ function ProductDetailPage() {
 
             <div className="product-detail-meta">
               <span>Бренд: {product.brand}</span>
-              <span>Код: {product.productCode}</span>
               <span>Рейтинг: {Number(product.rating || 0).toFixed(1)}</span>
             </div>
 
             <p className="product-detail-price">
               {formatPrice(product.price)} {currencyCode}
-              {Number(product.oldPrice) > Number(product.price) ? (
-                <span>
-                  {formatPrice(product.oldPrice)} {currencyCode}
-                </span>
-              ) : null}
             </p>
 
             <p className="product-detail-delivery">{deliveryLabel}</p>
@@ -430,9 +323,6 @@ function ProductDetailPage() {
                   <button type="button" className="primary-button" onClick={handleAddToCart}>
                     В корзину
                   </button>
-                  <button type="button" className="accent-button" onClick={openQuickOrder}>
-                    Купить в 1 клик
-                  </button>
                 </>
               ) : (
                 <button type="button" className="accent-button" onClick={openPreorder}>
@@ -443,11 +333,6 @@ function ProductDetailPage() {
               <Link to="/cart" className="ghost-button">
                 Перейти в корзину
               </Link>
-              {product.productUrl ? (
-                <a className="ghost-button" href={product.productUrl} target="_blank" rel="noreferrer">
-                  Открыть источник
-                </a>
-              ) : null}
             </div>
           </div>
         </div>
@@ -507,79 +392,15 @@ function ProductDetailPage() {
         ) : null}
       </div>
 
-      {isQuickOrderOpen ? (
-        <div className="quick-order-backdrop" onClick={closeModals}>
-          <div className="quick-order-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="quick-order-head">
-              <div>
-                <h2>Купить в 1 клик</h2>
-                <p className="muted-text">{product.name} • {quantity} шт.</p>
-              </div>
-              <button type="button" className="quick-order-close" onClick={closeModals} aria-label="Закрыть">
-                ×
-              </button>
-            </div>
-
-            <form className="quick-order-form" onSubmit={handleQuickOrderSubmit}>
-              <label className="auth-field">
-                Имя *
-                <input
-                  type="text"
-                  value={quickOrderForm.firstName}
-                  onChange={(event) => setQuickOrderForm((current) => ({ ...current, firstName: event.target.value }))}
-                  required
-                />
-              </label>
-              <label className="auth-field">
-                Фамилия
-                <input
-                  type="text"
-                  value={quickOrderForm.lastName}
-                  onChange={(event) => setQuickOrderForm((current) => ({ ...current, lastName: event.target.value }))}
-                />
-              </label>
-              <label className="auth-field">
-                Телефон *
-                <input
-                  type="tel"
-                  value={quickOrderForm.phone}
-                  onChange={(event) => setQuickOrderForm((current) => ({ ...current, phone: event.target.value }))}
-                  required
-                />
-              </label>
-              <label className="auth-field">
-                E-mail
-                <input
-                  type="email"
-                  value={quickOrderForm.email}
-                  onChange={(event) => setQuickOrderForm((current) => ({ ...current, email: event.target.value }))}
-                />
-              </label>
-              <label className="auth-field">
-                Комментарий
-                <textarea
-                  className="admin-textarea quick-order-textarea"
-                  value={quickOrderForm.comment}
-                  onChange={(event) => setQuickOrderForm((current) => ({ ...current, comment: event.target.value }))}
-                />
-              </label>
-              <button className="quick-order-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Отправляем...' : 'Оформить заказ'}
-              </button>
-            </form>
-          </div>
-        </div>
-      ) : null}
-
       {isPreorderOpen ? (
-        <div className="preorder-backdrop" onClick={closeModals}>
+        <div className="preorder-backdrop" onClick={closePreorder}>
           <div className="preorder-modal" onClick={(event) => event.stopPropagation()}>
             <div className="quick-order-head product-modal-head">
               <div>
                 <h2>Предзаказ товара</h2>
                 <p className="muted-text preorder-product">{product.name}</p>
               </div>
-              <button type="button" className="quick-order-close" onClick={closeModals} aria-label="Закрыть">
+              <button type="button" className="quick-order-close" onClick={closePreorder} aria-label="Закрыть">
                 ×
               </button>
             </div>

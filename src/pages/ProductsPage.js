@@ -18,12 +18,12 @@ const sortOptions = [
 ];
 
 const deliveryLabels = {
-  today: 'Самовывоз сегодня',
+  today: 'Доставка сегодня',
   tomorrow: 'Доставка завтра',
   '2-3 days': 'Доставка 2-3 дня',
   '3-5 days': 'Доставка 3-5 дней',
   preorder: 'Поставка под заказ',
-  сегодня: 'Самовывоз сегодня',
+  сегодня: 'Доставка сегодня',
   завтра: 'Доставка завтра',
   '2-3 дня': 'Доставка 2-3 дня',
   '3-5 дней': 'Доставка 3-5 дней',
@@ -32,6 +32,31 @@ const deliveryLabels = {
 
 function formatPrice(value) {
   return String(Math.round(Number(value || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function formatDeliveryLabel(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+
+  if (!normalized || normalized === 'all') {
+    return 'Срок доставки уточняется';
+  }
+  if (normalized.includes('сегодня') || normalized === 'today') {
+    return 'Доставка сегодня';
+  }
+  if (normalized.includes('завтра') || normalized === 'tomorrow') {
+    return 'Доставка завтра';
+  }
+  if (normalized.includes('2-3')) {
+    return 'Доставка 2-3 дня';
+  }
+  if (normalized.includes('3-5')) {
+    return 'Доставка 3-5 дней';
+  }
+  if (normalized.includes('предзаказ') || normalized === 'preorder') {
+    return 'Поставка под заказ';
+  }
+
+  return String(deliveryLabels[value] || value || 'Срок доставки уточняется').replace(/самовывоз/gi, 'Доставка');
 }
 
 function readFilters(searchParams) {
@@ -341,7 +366,7 @@ function ProductsPage() {
                           key={product.productCode || product.externalCode || product.name}
                           product={product}
                           formatPrice={formatPrice}
-                          deliveryLabel={deliveryLabels[product.delivery] || 'Срок уточняется'}
+                          deliveryLabel={formatDeliveryLabel(product.delivery)}
                           onAddToCart={handleAddToCart}
                         />
                       ))}

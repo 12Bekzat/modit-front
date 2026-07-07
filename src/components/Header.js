@@ -159,7 +159,7 @@ function Header({ categories, onOpenDrawer, showCategoryBar = true }) {
     <header className="site-header">
       <div className="topbar">
         <div className="container topbar-inner">
-          <p>Бесплатная доставка от 20 000 KZT и быстрый самовывоз</p>
+          <p>Бесплатная доставка от 20 000 KZT</p>
           <div className="topbar-actions">
             <Link to="/products">Магазин</Link>
             <a href="#site-footer">Поддержка</a>

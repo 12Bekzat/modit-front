@@ -7,37 +7,31 @@ import PerksSection from '../components/PerksSection';
 import BusinessBenefitsSection from '../components/BusinessBenefitsSection';
 import NewsletterSection from '../components/NewsletterSection';
 import { useCart } from '../context/CartContext';
-import { promoCards, perks, storeStats, filterChips } from '../data/storeData';
-import { buildAllowedCategoryCards } from '../data/allowedCategories';
-import { fetchCategoryNavigation, fetchProducts } from '../services/productApi';
-
-const categoryTones = ['sun', 'mint', 'ink', 'peach', 'sand', 'berry', 'sky', 'lime'];
+import { promoCards, perks, storeStats, filterChips, featuredCategoryTiles } from '../data/storeData';
+import { fetchProducts } from '../services/productApi';
 
 function HomePage() {
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
-  const [categoryCards, setCategoryCards] = useState(buildAllowedCategoryCards([], categoryTones));
+  const [categoryCards, setCategoryCards] = useState(featuredCategoryTiles);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadHomeData = async () => {
       try {
-        const [catalogData, navigationData] = await Promise.all([
-          fetchProducts({ page: 0, size: 8, sort: 'popular', inStock: true }),
-          fetchCategoryNavigation().catch(() => null)
-        ]);
+        const catalogData = await fetchProducts({ page: 0, size: 8, sort: 'popular', inStock: true });
 
         if (cancelled) {
           return;
         }
 
         setProducts(catalogData.items || []);
-        setCategoryCards(buildAllowedCategoryCards(navigationData || [], categoryTones));
+        setCategoryCards(featuredCategoryTiles);
       } catch {
         if (!cancelled) {
           setProducts([]);
-          setCategoryCards(buildAllowedCategoryCards([], categoryTones));
+          setCategoryCards(featuredCategoryTiles);
         }
       }
     };

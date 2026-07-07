@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { createOrder } from '../services/orderApi';
 
 const deliveryOptions = [
-  { id: 'pickup', title: 'Самовывоз сегодня', text: 'Бесплатно' },
+  { id: 'today', title: 'Доставка сегодня', text: '2 990 KZT' },
   { id: 'tomorrow', title: 'Доставка завтра', text: '2 990 KZT' },
   { id: 'express', title: 'Экспресс 2 часа', text: '4 990 KZT' }
 ];

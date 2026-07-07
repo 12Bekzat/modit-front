@@ -138,6 +138,29 @@ export function uploadCatalogImportFile(token, file) {
   });
 }
 
+export function previewCatalogImportFile(token, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return apiRequest('/api/admin/catalog-import/file/preview', {
+    method: 'POST',
+    body: formData,
+    token
+  });
+}
+
+export function uploadCatalogImportFileWithMapping(token, file, mapping) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('mapping', JSON.stringify(mapping || {}));
+
+  return apiRequest('/api/admin/catalog-import/file', {
+    method: 'POST',
+    body: formData,
+    token
+  });
+}
+
 export function fetchAdminPreorders(token) {
   return apiRequest('/api/admin/preorders', { token });
 }

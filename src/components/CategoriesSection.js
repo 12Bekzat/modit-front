@@ -3,28 +3,25 @@ import { buildCatalogPath } from '../utils/catalogRouting';
 
 function CategoriesSection({ categoryCards }) {
   return (
-    <section className="section">
-      <div className="container section-head">
-        <div>
-          <h2>Категории недели</h2>
-          <p>Все популярные направления в одном месте.</p>
-        </div>
-        <Link to="/products" className="ghost-button">
-          Все категории
-        </Link>
-      </div>
-      <div className="container grid categories">
-        {categoryCards.map((item, index) => (
+    <section className="section featured-tiles-section">
+      <div className="container featured-tiles">
+        {categoryCards.map((item) => (
           <Link
             key={item.title}
-            to={buildCatalogPath({ categories: [item.title] })}
-            className={`category-card tone-${item.tone}`}
+            to={buildCatalogPath(item.params || { categories: [item.title] })}
+            className="featured-tile"
           >
-            <div>
-              <p className="card-title">{item.title}</p>
-              <p className="card-subtitle">{item.subtitle}</p>
-            </div>
-            <div className="card-index">0{index + 1}</div>
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl}
+                alt=""
+                loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : null}
+            <span>{item.title}</span>
           </Link>
         ))}
       </div>

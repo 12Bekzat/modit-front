@@ -7,6 +7,39 @@ export const categoryCards = buildAllowedCategoryCards(
   ['sun', 'mint', 'ink', 'peach', 'sand', 'berry', 'sky', 'lime']
 );
 
+export const featuredCategoryTiles = [
+  {
+    title: 'Ноутбуки',
+    params: { search: 'ноутбук', categories: ['Компьютеры и комплектующие'] },
+    imageUrl: '/category-images/laptops.webp'
+  },
+  {
+    title: 'ОЗУ',
+    params: { search: 'оперативная память', categories: ['Компьютеры и комплектующие'] },
+    imageUrl: '/category-images/ram.webp'
+  },
+  {
+    title: 'Видеокарты',
+    params: { search: 'видеокарта', categories: ['Компьютеры и комплектующие'] },
+    imageUrl: '/category-images/gpu.webp'
+  },
+  {
+    title: 'Корпуса',
+    params: { search: 'корпус', categories: ['Компьютеры и комплектующие'] },
+    imageUrl: '/category-images/cases.webp'
+  },
+  {
+    title: 'Мониторы',
+    params: { search: 'монитор', categories: ['Компьютеры и комплектующие'] },
+    imageUrl: '/category-images/monitors.webp'
+  },
+  {
+    title: 'SSD накопители',
+    params: { search: 'ssd', categories: ['Носители информации'] },
+    imageUrl: '/category-images/ssd.webp'
+  }
+];
+
 export const promoCards = [
   {
     title: 'Месяц выгодных цен',
@@ -43,7 +76,7 @@ export const products = [
     oldPrice: '149 990 KZT',
     tag: 'Хит',
     rating: '4.9/5',
-    delivery: 'Самовывоз сегодня'
+    delivery: 'Доставка сегодня'
   },
   {
     name: 'Вижн 55 OLED',
@@ -67,7 +100,7 @@ export const products = [
     oldPrice: '349 990 KZT',
     tag: 'Выбор профи',
     rating: '4.8/5',
-    delivery: 'Самовывоз сегодня'
+    delivery: 'Доставка сегодня'
   },
   {
     name: 'ХоумКул 12',
@@ -91,7 +124,7 @@ export const products = [
     oldPrice: '159 990 KZT',
     tag: 'Новинка',
     rating: '4.6/5',
-    delivery: 'Самовывоз сегодня'
+    delivery: 'Доставка сегодня'
   }
 ];
 
@@ -116,7 +149,7 @@ export const perks = [
 
 export const storeStats = [
   { label: '350+ брендов', value: 'Под рукой' },
-  { label: '1200 пунктов', value: 'Самовывоза' },
+  { label: 'Доставка', value: 'По городу' },
   { label: '24/7 поддержка', value: 'Всегда рядом' }
 ];
 

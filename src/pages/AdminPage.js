@@ -16,8 +16,10 @@ import {
   fetchCatalogImportSettings,
   fetchMarkupSettings,
   fetchProductMarkupRules,
+  previewCatalogImportFile,
   syncCatalogs,
   uploadCatalogImportFile,
+  uploadCatalogImportFileWithMapping,
   updateAdminUser,
   updateCatalogImportSettings,
   updateMarkupSettings,
@@ -87,6 +89,8 @@ function AdminPage() {
   const [isFileImporting, setIsFileImporting] = useState(false);
   const [catalogImportFile, setCatalogImportFile] = useState(null);
   const [catalogImportInputKey, setCatalogImportInputKey] = useState(0);
+  const [catalogImportPreview, setCatalogImportPreview] = useState(null);
+  const [catalogImportMapping, setCatalogImportMapping] = useState({});
   const [statusUpdateId, setStatusUpdateId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -264,6 +268,31 @@ function AdminPage() {
     }
   };
 
+  const handleCatalogFileSelect = async (file) => {
+    setCatalogImportFile(file || null);
+    setCatalogImportPreview(null);
+    setCatalogImportMapping({});
+    setMessage('');
+    setError('');
+
+    if (!file) {
+      return;
+    }
+
+    const name = file.name || '';
+    if (!/\.(xls|xlsx)$/i.test(name)) {
+      return;
+    }
+
+    try {
+      const preview = await previewCatalogImportFile(token, file);
+      setCatalogImportPreview(preview);
+      setCatalogImportMapping(preview.suggestedMapping || {});
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
   const handleCatalogFileUpload = async (event) => {
     event.preventDefault();
     if (!catalogImportFile) {
@@ -277,9 +306,13 @@ function AdminPage() {
     setIsFileImporting(true);
 
     try {
-      const result = await uploadCatalogImportFile(token, catalogImportFile);
+      const result = catalogImportPreview
+        ? await uploadCatalogImportFileWithMapping(token, catalogImportFile, catalogImportMapping)
+        : await uploadCatalogImportFile(token, catalogImportFile);
       await loadAdminData();
       setCatalogImportFile(null);
+      setCatalogImportPreview(null);
+      setCatalogImportMapping({});
       setCatalogImportInputKey((current) => current + 1);
       setMessage(
         `Файл обработан. Создано: ${result.created ?? 0}, обновлено: ${result.updated ?? 0}, пропущено: ${result.skipped ?? 0}.`
@@ -513,10 +546,60 @@ function AdminPage() {
                         key={catalogImportInputKey}
                         type="file"
                         accept=".xls,.xlsx,.xml,application/xml,text/xml"
-                        onChange={(event) => setCatalogImportFile(event.target.files?.[0] || null)}
+                        onChange={(event) => handleCatalogFileSelect(event.target.files?.[0] || null)}
                         required
                       />
                     </label>
+                    {catalogImportPreview ? (
+                      <div className="import-mapping-panel">
+                        <div className="admin-form-head">
+                          <h3>Mapping колонок</h3>
+                          <span className="muted-text">Строка заголовков: {catalogImportPreview.headerRowIndex + 1}</span>
+                        </div>
+                        <div className="import-mapping-grid">
+                          {Object.entries(catalogImportPreview.fieldLabels || {}).map(([field, label]) => (
+                            <label key={field} className="auth-field">
+                              {label}
+                              <select
+                                className="filter-select"
+                                value={catalogImportMapping[field] || ''}
+                                onChange={(event) => setCatalogImportMapping((current) => ({
+                                  ...current,
+                                  [field]: event.target.value
+                                }))}
+                              >
+                                <option value="">Не импортировать</option>
+                                {(catalogImportPreview.columns || []).map((column) => (
+                                  <option key={`${field}-${column}`} value={column}>{column}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ))}
+                        </div>
+                        {(catalogImportPreview.previewRows || []).length > 0 ? (
+                          <div className="import-preview-table-wrap">
+                            <table className="import-preview-table">
+                              <thead>
+                                <tr>
+                                  {(catalogImportPreview.columns || []).slice(0, 8).map((column) => (
+                                    <th key={column}>{column}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {catalogImportPreview.previewRows.map((row, rowIndex) => (
+                                  <tr key={`preview-${rowIndex}`}>
+                                    {(catalogImportPreview.columns || []).slice(0, 8).map((column) => (
+                                      <td key={`${rowIndex}-${column}`}>{row[column] || ''}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <button type="submit" className="accent-button auth-submit" disabled={isFileImporting}>
                       {isFileImporting ? 'Загружаем файл...' : 'Загрузить файл'}
                     </button>
