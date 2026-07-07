@@ -4,6 +4,7 @@ import CatalogProductCard from '../components/CatalogProductCard';
 import FiltersPanel from '../components/FiltersPanel';
 import Pagination from '../components/Pagination';
 import { useCart } from '../context/CartContext';
+import { allowedCatalogCategories, sanitizeCategorySelection } from '../data/allowedCategories';
 import { fetchProductFilters, fetchProducts } from '../services/productApi';
 
 const PAGE_SIZE = 24;
@@ -38,7 +39,7 @@ function readFilters(searchParams) {
 
   return {
     search: searchParams.get('search') || '',
-    categories: searchParams.getAll('categories').filter(Boolean),
+    categories: sanitizeCategorySelection(searchParams.getAll('categories')),
     brands: searchParams.getAll('brands').filter(Boolean),
     priceMin: searchParams.get('priceMin') || '',
     priceMax: searchParams.get('priceMax') || '',
@@ -55,7 +56,7 @@ function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [products, setProducts] = useState([]);
-  const [catalogCategories, setCatalogCategories] = useState([]);
+  const [catalogCategories, setCatalogCategories] = useState(allowedCatalogCategories);
   const [catalogBrands, setCatalogBrands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -135,7 +136,7 @@ function ProductsPage() {
         if (isCancelled) {
           return;
         }
-        setCatalogCategories(response.categories || []);
+        setCatalogCategories(allowedCatalogCategories);
         setCatalogBrands(response.brands || []);
       } catch (requestError) {
         if (!isCancelled) {

@@ -9,12 +9,13 @@ import {
   footerBuyerLinks,
   footerContacts
 } from '../data/storeData';
-import { fetchCategoryNavigation, fetchProductFilters } from '../services/productApi';
+import { allowedCatalogCategories, buildAllowedCategoryNavigation } from '../data/allowedCategories';
+import { fetchCategoryNavigation } from '../services/productApi';
 
 function MainLayout({ children, showCategoryBar = true }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [catalogLinks, setCatalogLinks] = useState([]);
-  const [catalogNavigation, setCatalogNavigation] = useState([]);
+  const [catalogLinks, setCatalogLinks] = useState(allowedCatalogCategories);
+  const [catalogNavigation, setCatalogNavigation] = useState(buildAllowedCategoryNavigation());
 
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : 'auto';
@@ -28,42 +29,20 @@ function MainLayout({ children, showCategoryBar = true }) {
 
     const loadCatalogLinks = async () => {
       try {
-        const [navigationResponse, filterResponse] = await Promise.all([
-          fetchCategoryNavigation(),
-          fetchProductFilters()
-        ]);
+        const navigationResponse = await fetchCategoryNavigation();
 
         if (cancelled) {
           return;
         }
 
-        if (Array.isArray(navigationResponse) && navigationResponse.length > 0) {
-          setCatalogNavigation(navigationResponse);
-          setCatalogLinks(navigationResponse.map((item) => item.name));
-          return;
-        }
-
-        if (Array.isArray(filterResponse.categories) && filterResponse.categories.length > 0) {
-          setCatalogLinks(filterResponse.categories);
-          setCatalogNavigation(
-            filterResponse.categories.map((name, index) => ({
-              id: `filter-${index}`,
-              name,
-              description: 'Перейти в каталог',
-              featured: index < 4,
-              visible: true,
-              sortOrder: index
-            }))
-          );
-          return;
-        }
-
-        setCatalogLinks([]);
-        setCatalogNavigation([]);
+        const nextNavigation = buildAllowedCategoryNavigation(navigationResponse);
+        setCatalogNavigation(nextNavigation);
+        setCatalogLinks(nextNavigation.map((item) => item.name));
       } catch {
         if (!cancelled) {
-          setCatalogLinks([]);
-          setCatalogNavigation([]);
+          const fallbackNavigation = buildAllowedCategoryNavigation();
+          setCatalogNavigation(fallbackNavigation);
+          setCatalogLinks(fallbackNavigation.map((item) => item.name));
         }
       }
     };

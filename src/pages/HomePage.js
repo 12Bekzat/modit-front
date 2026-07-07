@@ -8,24 +8,24 @@ import BusinessBenefitsSection from '../components/BusinessBenefitsSection';
 import NewsletterSection from '../components/NewsletterSection';
 import { useCart } from '../context/CartContext';
 import { promoCards, perks, storeStats, filterChips } from '../data/storeData';
-import { fetchCategoryNavigation, fetchProductFilters, fetchProducts } from '../services/productApi';
+import { buildAllowedCategoryCards } from '../data/allowedCategories';
+import { fetchCategoryNavigation, fetchProducts } from '../services/productApi';
 
 const categoryTones = ['sun', 'mint', 'ink', 'peach', 'sand', 'berry', 'sky', 'lime'];
 
 function HomePage() {
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
-  const [categoryCards, setCategoryCards] = useState([]);
+  const [categoryCards, setCategoryCards] = useState(buildAllowedCategoryCards([], categoryTones));
 
   useEffect(() => {
     let cancelled = false;
 
     const loadHomeData = async () => {
       try {
-        const [catalogData, navigationData, filterData] = await Promise.all([
+        const [catalogData, navigationData] = await Promise.all([
           fetchProducts({ page: 0, size: 8, sort: 'popular', inStock: true }),
-          fetchCategoryNavigation().catch(() => null),
-          fetchProductFilters()
+          fetchCategoryNavigation().catch(() => null)
         ]);
 
         if (cancelled) {
@@ -33,34 +33,11 @@ function HomePage() {
         }
 
         setProducts(catalogData.items || []);
-
-        if (Array.isArray(navigationData) && navigationData.length > 0) {
-          setCategoryCards(
-            navigationData.slice(0, 8).map((item, index) => ({
-              title: item.name,
-              subtitle: item.description || 'Смотреть в каталоге',
-              tone: categoryTones[index % categoryTones.length]
-            }))
-          );
-          return;
-        }
-
-        if (Array.isArray(filterData.categories) && filterData.categories.length > 0) {
-          setCategoryCards(
-            filterData.categories.slice(0, 8).map((title, index) => ({
-              title,
-              subtitle: 'Смотреть в каталоге',
-              tone: categoryTones[index % categoryTones.length]
-            }))
-          );
-          return;
-        }
-
-        setCategoryCards([]);
+        setCategoryCards(buildAllowedCategoryCards(navigationData || [], categoryTones));
       } catch {
         if (!cancelled) {
           setProducts([]);
-          setCategoryCards([]);
+          setCategoryCards(buildAllowedCategoryCards([], categoryTones));
         }
       }
     };

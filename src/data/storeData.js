@@ -1,23 +1,11 @@
-﻿export const navLinks = [
-  'Смартфоны',
-  'Ноутбуки',
-  'Телевизоры',
-  'Крупная техника',
-  'Гаджеты',
-  'Дом и ремонт',
-  'Акции'
-];
+import { allowedCatalogCategories, buildAllowedCategoryCards } from './allowedCategories';
 
-export const categoryCards = [
-  { title: 'Смартфоны', subtitle: 'Хиты 2026', tone: 'sun' },
-  { title: 'Ноутбуки', subtitle: 'Для работы и игр', tone: 'mint' },
-  { title: 'Телевизоры', subtitle: '4K и OLED', tone: 'ink' },
-  { title: 'Наушники', subtitle: 'Шумоподавление', tone: 'peach' },
-  { title: 'Пылесосы', subtitle: 'Умная уборка', tone: 'sand' },
-  { title: 'Кофемашины', subtitle: 'Домашний бариста', tone: 'berry' },
-  { title: 'Смарт-часы', subtitle: 'Спорт и стиль', tone: 'sky' },
-  { title: 'Игровые консоли', subtitle: 'Новое поколение', tone: 'lime' }
-];
+export const navLinks = allowedCatalogCategories;
+
+export const categoryCards = buildAllowedCategoryCards(
+  [],
+  ['sun', 'mint', 'ink', 'peach', 'sand', 'berry', 'sky', 'lime']
+);
 
 export const promoCards = [
   {
@@ -147,7 +135,7 @@ export const drawerBuyerLinks = [
   { label: 'Сервис', to: '/business' }
 ];
 
-export const footerCatalogLinks = ['Смартфоны', 'Ноутбуки', 'Техника для кухни', 'Игровые решения'];
+export const footerCatalogLinks = allowedCatalogCategories;
 
 export const footerBuyerLinks = [
   { label: 'Доставка и оплата', to: '/business' },
@@ -158,17 +146,7 @@ export const footerBuyerLinks = [
 
 export const footerContacts = ['+7 707 000 00 00', 'support@technonord.kz', '09:00 - 23:00'];
 
-export const catalogCategories = [
-  'Смартфоны',
-  'Планшеты',
-  'Ноутбуки',
-  'Телевизоры',
-  'Аудио',
-  'Кухня',
-  'Умный дом',
-  'Игровые решения',
-  'Бытовая техника'
-];
+export const catalogCategories = allowedCatalogCategories;
 
 export const catalogBrands = [
   'Нова',
